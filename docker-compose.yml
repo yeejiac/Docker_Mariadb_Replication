@@ -1,0 +1,39 @@
+version: '3.7'
+services:
+  database_master:
+    images: mariadb
+    container_name: database_master
+    volumes:
+      - type: bind
+        source: ./doc/master.cnf
+        target: /etc/mysql/my.cnf
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      vpcbr:
+        ipv4_address: 172.28.0.3
+
+  mysql-slave:
+    images: mariadb
+    container_name: mysql-slave
+    ports:
+      - '3308:3306'
+    volumes:
+      - type: bind
+        source: ./doc/slave.cnf
+        target: /etc/mysql/conf.d/slave.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_REPLICATION_MODE=slave
+      - MYSQL_REPLICATION_USER=slave_user
+      - MYSQL_REPLICATION_PASSWORD=password
+    depends_on:
+      - database_master
+    command: [
+      "--skip-log-bin",
+      "--skip-log-slave-updates",
+    ]
+    networks:
+      vpcbr:
+        ipv4_address: 172.28.0.4
